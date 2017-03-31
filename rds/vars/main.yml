@@ -1,0 +1,9 @@
+---
+region: us-east-1
+instance_type: db.m3.medium
+db_size: 10
+# http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html#PostgreSQL.Concepts.General.DBVersions
+db_engine: postgres
+engine_version: 9.6.1
+db_username: "dbuser"
+db_password: "changeme"

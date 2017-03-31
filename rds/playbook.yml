@@ -1,0 +1,21 @@
+---
+- hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - rds:
+        command: create
+        instance_name: "{{ansible_user_id}}-{{db_engine}}-{{ ansible_date_time.epoch }}"
+        region: "{{ region }}"
+        wait: yes
+        wait_timeout: 1200
+        db_engine: "{{ db_engine }}"
+        size: "{{ db_size }}"
+        instance_type: "{{ instance_type }}"
+        username: "{{ db_username }}"
+        password: "{{ db_password }}"
+        tags:
+          Environment: testing
+          Application: test-label
+          Description: "{{ansible_user_id}} RDS {{db_engine}} {{ ansible_date_time.iso8601 }}"
