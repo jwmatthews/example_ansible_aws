@@ -1,0 +1,15 @@
+---
+aws_region: us-east-1
+aws_ami_id: ami-b63769a1
+instance_type: t2.micro
+ssh_key_name: "splice"
+target_dns_zone: "ec2.dog8code.com"
+
+target_subdomain: "{{ ansible_user_id }}"
+instance_name: "{{ ansible_user_id}}-{{ target_subdomain }}.{{ target_dns_zone }}"
+aws_sec_group_name: "test_awsdemo_security_group"
+vpc_name: "test_awsdemo_vpc"
+vpc_cidr_block: "10.0.0.0/16"
+vpc_subnet_cidr: "10.0.0.0/24"
+vpc_subnet_name: "test_awsdemo_subnet"
+vpc_route_table_name: "test_awsdemo_route_table"
