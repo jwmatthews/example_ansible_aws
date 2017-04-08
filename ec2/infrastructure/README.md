@@ -38,8 +38,8 @@ Playbook will:
 ### Execute
   * Edit the variables file `common_vars`
     * Update:
-            export AWS_SSH_KEY_NAME="splice"
-            export TARGET_DNS_ZONE="ec2.dog8code.com"
+              export AWS_SSH_KEY_NAME="splice"
+              export TARGET_DNS_ZONE="ec2.dog8code.com"
         * TARGET_DNS_ZONE needs to match a hosted zone entry in your Route53 account, we will create a subdomain under it for the ec2 instance
   * `./run_create_infrastructure.sh`
     * Creates our infrastructure in ec2 if it doesn't exist
