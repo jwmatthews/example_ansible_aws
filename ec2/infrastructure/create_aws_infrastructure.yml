@@ -1,0 +1,106 @@
+---
+- hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - vars/main.yml
+  tasks:
+    # Referred to below to create VPC
+    # https://github.com/jeremievallee/ansible-aws-vpc/blob/master/1-simple-vpc/roles/vpc/tasks/main.yml
+
+    - name:               Create VPC
+      ec2_vpc_net:
+        name:             "{{ vpc_name }}"
+        cidr_block:       "{{ vpc_cidr_block }}"
+        region:           "{{ aws_region }}"
+        state:            "present"
+      register: my_vpc
+
+    - set_fact:
+        vpc_id:           "{{ my_vpc.vpc.id }}"
+
+    - name:               Create Public Subnet
+      ec2_vpc_subnet:
+        state:            "present"
+        vpc_id:           "{{ vpc_id }}"
+        cidr:             "{{ vpc_cidr_block }}"
+        az:               "{{ aws_region }}a"
+        region:           "{{ aws_region }}"
+        resource_tags:
+          Name:           "{{ vpc_subnet_name }}"
+      register: my_public_subnet
+
+    - set_fact:
+        public_subnet_id: "{{ my_public_subnet.subnet.id }}"
+
+    - name:               Create Internet Gateway for VPC
+      ec2_vpc_igw:
+        vpc_id:           "{{ vpc_id }}"
+        region:           "{{ aws_region }}"
+        state:            "present"
+      register: my_vpc_igw
+
+    - set_fact:
+        igw_id:           "{{ my_vpc_igw.gateway_id }}"
+
+    - name:               Set up public subnet route table
+      ec2_vpc_route_table:
+        vpc_id:           "{{ vpc_id }}"
+        region:           "{{ aws_region }}"
+        tags:
+          Name:           "{{ vpc_route_table_name }}"
+        subnets:
+          - "{{ public_subnet_id }}"
+        routes:
+          - dest:         "0.0.0.0/0"
+            gateway_id:   "{{ igw_id }}"
+
+    - name:               Create Main Security Group
+      ec2_group:
+        name:             "{{ aws_sec_group_name }}"
+        description:      "{{ aws_sec_group_name }}"
+        vpc_id:           "{{ vpc_id }}"
+        region:           "{{ aws_region }}"
+        rules:
+          - proto:        "tcp"
+            from_port:    "22"
+            to_port:      "22"
+            cidr_ip:      "0.0.0.0/0"
+          - proto:        "tcp"
+            from_port:    "80"
+            to_port:      "80"
+            cidr_ip:      "0.0.0.0/0"
+          - proto:        "tcp"
+            from_port:    "443"
+            to_port:      "443"
+            cidr_ip:      "0.0.0.0/0"
+          - proto:        "tcp"
+            from_port:    "8443"
+            to_port:      "8443"
+            cidr_ip:      "0.0.0.0/0"
+
+    - name:  Create EC-2 Instance
+      ec2:
+        key_name: "{{ ssh_key_name }}"
+        instance_type: "{{ instance_type }}"
+        instance_tags:
+          Name: "{{ ansible_user_id}}-{{ ansible_date_time.epoch }}"
+        image: "{{ aws_ami_id }}"
+        wait: yes
+        count: 1
+        vpc_subnet_id: "{{ public_subnet_id }}"
+        assign_public_ip: yes
+        region: "{{ aws_region }}"
+      register: my_ec2_instances
+
+    - name: Associate Elastic IP {{ aws_elastic_ip }}
+      ec2_eip:
+        device_id: "{{ my_ec2_instances.instances[0].id }}"
+        ip: "{{ aws_elastic_ip }}"
+        region: "{{ aws_region }}"
+
+    - set_fact:
+        msg: |
+             EC-2 Instance ID: {{ my_ec2_instances.instances[0].id }}
+             Associated to Elastic IP:  {{ aws_elastic_ip }}
+    - debug:
+        msg: "{{ msg.split('\n') }}"
