@@ -1,0 +1,9 @@
+# Sample playbook to test using dynamic inventory and executing a task
+- hosts: tag_Name_{{ instance_lookup_value }}
+  gather_facts: True
+  become: True
+  tasks:
+    - name: install Apache
+      yum:
+        name: httpd
+        state: present
